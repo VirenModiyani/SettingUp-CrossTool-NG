@@ -94,11 +94,16 @@ cd ~/x-tools/arm-unknown-linux-gnueabi/bin
 
 Here you will find our Compiler :         __arm-unknown-linux-gnueabi-gcc__
 ## 🌐 Step 2: Globally access
-To Use our Compiler friend anywhere we make it global as setting path:
+To Use our Compiler friend anywhere we make it global as setting path :
 
 ```
-PATH=~/x-tools/arm-unknown-linux-gnueabi/bin:$PATH
+nano ~/.bashrc
 ```
+Paste at the end of script (Thisscript always gets executed when the terminal starts)
+```
+export PATH=~/x-tools/arm-unknown-linux-gnueabi/bin:$PATH
+```
+Save and exit the file (in Nano, press Ctrl + X, then Y, and Enter).
 
 _Now it is globally accessible_
 ## 🧪 Step 3: Testing
@@ -138,4 +143,79 @@ file 1
 
 This shows the file is formed for which device.
 
+__To see the version of Compiler:__
+
+```
+arm-unknown-linux-gnueabi-gcc --version
+```
 # 🔧 Chapter 4: The ToolChain sysroot (Info)
+
+`Lets dive into the sysroot where all of your tools are present`
+
+To find that place enter:
+```
+arm-unknown-linux-gnueabi-gcc -print-sysroot
+```
+get into the Library using `cd` 
+
+you find this structure
+```
+.
+├── etc
+├── lib
+├── sbin
+├── usr   
+     ├── bin
+     ├── include
+     ├── lib
+     ├── libexec
+     ├── sbin
+     └── share
+└── var
+```
+
+- `lib: Stores the shared objects for the C library and the dynamic linker/loader, including ld-linux.`
+
+- `sbin: Provides the ldconfig utility, which optimizes library loading paths.`
+
+**inside usr/**:
+
+- `usr/lib: Contains the static library archive files for the C library and any other libraries that may be installed later.`
+
+
+- `usr/include: Holds the headers for all libraries.`
+
+
+- `usr/bin: Houses utility programs that run on the target system, such as the ldd command.`
+
+
+- `usr/share: Used for localization and internationalization.`
+
+# 📚  Chapter 5: Components of the C library
+The C library is not a single file but is made up of four main components that together implement the POSIX API:
+
+- **libc**: The core C library that includes familiar POSIX functions like `printf`, `open`, `close`, `read`, `write`, and more.
+- **libm**: Contains mathematical functions such as `cos`, `exp`, and `log`.
+- **libpthread**: Provides all POSIX thread functions, identified by names starting with `pthread_`.
+- **librt**: Includes real-time extensions to POSIX, such as shared memory and asynchronous I/O.
+
+The libc is default used while compilation. But lets say if we inclued `<math.h>` to use `log()` in our code then we need to add few more letters in out commad line:
+
+```
+arm-unknown-linux-gnueabi-gcc Some_mathfunction.c -o Some_mathfunction -lm
+```
+As the ``<math.h>`` is linked with `libm`. So, we need to mention with `-lm` at the end.
+
+Lets analyze our compiled program. To do that run:
+```
+arm-unknown-linux-gnueabi-readelf -a Some_mathfunction 
+```
+
+To see insight of library run ( Shared Library ):
+```
+arm-unknown-linux-gnueabi-readelf -a Some_mathfunction | grep "Shared library"
+```
+
+Nice, you will find:
+ - 0x00000001 (NEEDED)                     Shared library: **[libm.so.6]**
+ - 0x00000001 (NEEDED)                     Shared library: **[libc.so.6]**
