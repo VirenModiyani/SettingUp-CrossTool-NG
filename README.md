@@ -88,6 +88,11 @@ __The toolchain will be installed in ~/x-tools/arm-unknown-linux-gnueabi.😊__
 `We have Created the toolchain which contains various stuffs as Cross Compiler, Header Files, etc.`
 
 ## 🔍 Step 1: To find the files(Compiler & all)
+
+```
+which arm-unknown-linux-gnueabi-gcc
+```
+                              OR
 ```
 cd ~/x-tools/arm-unknown-linux-gnueabi/bin
 ```
@@ -174,24 +179,51 @@ you find this structure
 └── var
 ```
 
-- `lib: Stores the shared objects for the C library and the dynamic linker/loader, including ld-linux.`
+- `lib: Stores the shared objects for the C library and the` **dynamic linker/loader**`, including ld-linux.`
 
 - `sbin: Provides the ldconfig utility, which optimizes library loading paths.`
 
 **inside usr/**:
 
-- `usr/lib: Contains the static library archive files for the C library and any other libraries that may be installed later.`
+- `usr/lib: Contains `**the static library archive files for the C library and any other libraries that may be installed later.**
 
 
-- `usr/include: Holds the headers for all libraries.`
+- `usr/include: Holds the headers for `**all libraries.**
 
 
-- `usr/bin: Houses utility programs that run on the target system, such as the ldd command.`
+- `usr/bin: Houses utility programs that run on the target system, such as the` **ldd command.**
 
 
 - `usr/share: Used for localization and internationalization.`
+# 💻  Chapter 5:  QEMU
 
-# 📚  Chapter 5: Components of the C library
+QEMU is an open-source emulator that can run different operating systems and hardware architectures. It's often used for testing and development in embedded systems.
+
+As, in **Chapter 3 we compiled but we were not able to run**. So, in Emulation we can find the solution.
+
+- install the QEMU user emulator
+```
+sudo apt install qemu-user
+```
+
+- Now lets run
+```
+qemu-arm 1
+```
+Awwwh Again error ?
+`qemu-arm: Could not open '/lib/ld-musl-armhf.so.1': No such file or directory`
+
+- The issue is that qemu-arm is missing the ARM-compiled shared library loader required by the binary. Let's locate it within the toolchain we just compiled:
+1. Find foler of sysroot `Chapter 4` 
+2. Now we can run:
+```
+qemu-arm -L ~/x-tools/arm-unknown-linux-gnueabi/arm-unknown-linux-gnueabi/sysroot 1
+```
+**Bingo Now we have outer output**
+
+
+**`Hello, world!`** 😊
+# 📚  Chapter 6: Components of the C library
 The C library is not a single file but is made up of four main components that together implement the POSIX API:
 
 - **libc**: The core C library that includes familiar POSIX functions like `printf`, `open`, `close`, `read`, `write`, and more.
@@ -219,3 +251,39 @@ arm-unknown-linux-gnueabi-readelf -a Some_mathfunction | grep "Shared library"
 Nice, you will find:
  - 0x00000001 (NEEDED)                     Shared library: **[libm.so.6]**
  - 0x00000001 (NEEDED)                     Shared library: **[libc.so.6]**
+
+## 🔗 6.1: Linking
+- The library code can be linked in two ways:
+1. **Statically**:
+- All the library functions your application calls, along with their dependencies, are taken from the library archive.
+- These functions and dependencies are then bound into your executable.
+2. **Dynamically**:
+- References to the library files and functions are generated in the code.
+- Actual linking is done dynamically at runtime.
+
+
+     Static linking is beneficial in specific situations:
+
+     1. **Simplifying Small Systems**:  
+     - In systems like those with just BusyBox and a few scripts, static linking simplifies deployment. 
+     - By linking BusyBox statically, you **avoid the need to copy additional runtime library files and the linker into the system.**
+
+     2. **Smaller Executable Size**:  
+     - Static linking only includes the specific parts of the library that the application needs, rather than the entire library.
+     - This reduces the size of the executable, making it more efficient for smaller systems.
+
+     3. **Running Programs Before Filesystem Availability**:  
+     - If a program needs to run before the filesystem containing the runtime libraries is available, static linking ensures that all necessary code is bundled directly into the executable, allowing it to run independently of external libraries.
+
+You can link all the libraries statically by adding `-static` to the command line:
+
+```
+arm-unknown-linux-gnueabi-gcc -static Program.c -o Program
+```
+Now we have static file.
+
+To see the size of  static compiled file run:
+```
+ls -l
+```
+
